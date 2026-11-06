@@ -1,0 +1,38 @@
+CREATE SCHEMA IF NOT EXISTS sales;
+CREATE SCHEMA IF NOT EXISTS reports;
+
+DO $$
+BEGIN
+    IF to_regclass('reports.wb_sales_funnel_products_weekly') IS NOT NULL AND to_regclass('sales.wb_sales_funnel_products_weekly') IS NULL THEN
+        EXECUTE 'ALTER TABLE reports.wb_sales_funnel_products_weekly SET SCHEMA sales';
+    END IF;
+END $$;
+
+-- sales_funnel по неделям (API sales-funnel/products/history, aggregationLevel=week). Одна строка = один nm_id на одну неделю.
+CREATE SCHEMA IF NOT EXISTS sales;
+CREATE TABLE IF NOT EXISTS sales.wb_sales_funnel_products_weekly (
+    id BIGSERIAL PRIMARY KEY,
+    report_week_start DATE NOT NULL,
+    nm_id BIGINT NOT NULL,
+    title VARCHAR(1000),
+    vendor_code VARCHAR(255),
+    brand_name VARCHAR(255),
+    subject_id BIGINT,
+    subject_name VARCHAR(500),
+    open_count INT,
+    cart_count INT,
+    order_count INT,
+    order_sum DECIMAL(12, 2),
+    buyout_count INT,
+    buyout_sum DECIMAL(12, 2),
+    buyout_percent DECIMAL(5, 2),
+    add_to_cart_conversion DECIMAL(5, 2),
+    cart_to_order_conversion DECIMAL(5, 2),
+    add_to_wishlist_count INT,
+    currency VARCHAR(10),
+    last_synced_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (nm_id, report_week_start)
+);
+
+CREATE INDEX IF NOT EXISTS idx_wb_sales_funnel_weekly_week ON sales.wb_sales_funnel_products_weekly(report_week_start);
+CREATE INDEX IF NOT EXISTS idx_wb_sales_funnel_weekly_nm_id ON sales.wb_sales_funnel_products_weekly(nm_id);

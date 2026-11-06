@@ -1,0 +1,4 @@
+-r scripts/requirements.txt
+requests>=2.31,<3
+psycopg2-binary>=2.9,<3
+pytest>=8,<9

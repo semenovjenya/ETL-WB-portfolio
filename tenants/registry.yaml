@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "tenants": [
+    {
+      "tenant_id": "demo",
+      "tenant_slug": "demo",
+      "seller_sid": "demo-seller",
+      "seller_name": "Demo seller",
+      "status": "active",
+      "legacy": false,
+      "db_container_name": "wb-db-demo",
+      "db_volume_name": "wb_db_data_demo",
+      "db_host": "wb-db-demo",
+      "db_port_internal": 5432,
+      "db_name": "wb_demo",
+      "db_user": "wb_user",
+      "db_password_secret_ref": null,
+      "wb_api_token_secret_ref": null,
+      "tenant_env_file": null,
+      "schedules": {
+        "daily_pipeline_master": "30 7 * * *",
+        "hourly_snapshots": null,
+        "search_queries": "20 * * * *",
+        "sku_ai_analysis": "45 8 * * *",
+        "price_ai_analysis": null,
+        "serp_snapshot": "30 10 * * *"
+      },
+      "created_at": "2026-03-20T12:33:54+00:00",
+      "updated_at": "2026-03-20T12:33:54+00:00"
+    },
+    {
+      "tenant_id": "legacy-default",
+      "tenant_slug": "legacy-default",
+      "seller_sid": "legacy-default",
+      "seller_name": "Legacy default tenant",
+      "status": "active",
+      "legacy": true,
+      "db_container_name": "wb-pgvector",
+      "db_volume_name": "pgdata",
+      "db_host": "wb-shared-db",
+      "db_port_internal": 5432,
+      "db_name": "wb_docs",
+      "db_user": "wb_user",
+      "db_password_secret_ref": null,
+      "wb_api_token_secret_ref": null,
+      "tenant_env_file": null,
+      "schedules": {
+        "daily_pipeline_master": "30 7 * * *",
+        "hourly_snapshots": "5 * * * *",
+        "sku_ai_analysis": "45 8 * * *",
+        "price_ai_analysis": null,
+        "serp_snapshot": null
+      },
+      "created_at": "2026-03-20T00:00:00+00:00",
+      "updated_at": "2026-03-20T00:00:00+00:00"
+    }
+  ]
+}

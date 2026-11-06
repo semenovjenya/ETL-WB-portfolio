@@ -1,0 +1,160 @@
+# Airflow для проекта ПАРСЕР API WB (остатки + финансовые отчёты).
+# Запуск: docker compose -f docker-compose.airflow.yml up -d
+# UI: http://localhost:8082   Логин: admin / admin
+
+services:
+  airflow-meta-postgres:
+    image: postgres:16
+    container_name: wb-airflow-meta-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: airflow
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+    volumes:
+      - airflow_meta_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  airflow-webserver:
+    image: apache/airflow:2.9.0
+    container_name: wb-airflow-webserver
+    restart: unless-stopped
+    user: "0:0"
+    env_file:
+      - .env
+    environment:
+      AIRFLOW_HOME: /opt/airflow/airflow_home
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/project/airflow_home/dags
+      AIRFLOW__CORE__DEFAULT_TIMEZONE: Europe/Moscow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-meta-postgres:5432/airflow
+      AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: Europe/Moscow
+      AIRFLOW_UID: ${AIRFLOW_UID:-50000}
+      PYTHONPATH: /home/airflow/.local/lib/python3.12/site-packages
+      TZ: Europe/Moscow
+      POSTGRES_HOST: ${LEGACY_DB_HOST:-wb-shared-db}
+      DB_HOST: ${LEGACY_DB_HOST:-wb-shared-db}
+      DB_PORT: ${LEGACY_DB_PORT:-5432}
+      DB_NAME: ${LEGACY_DB_NAME:-wb_docs}
+      DB_USER: ${LEGACY_DB_USER:-wb_user}
+      DB_PASSWORD: ${LEGACY_DB_PASSWORD:-wb_pass}
+    ports:
+      - "8082:8080"
+    volumes:
+      - airflow_data:/opt/airflow/airflow_home
+      - .:/opt/airflow/project
+    networks:
+      - default
+      - shared-db
+    command: >
+      bash -lc "
+        export PATH=/home/airflow/.local/bin:/usr/local/bin:/usr/bin:/bin:$PATH &&
+        python -m pip install --no-cache-dir openai python-dotenv requests psycopg2-binary 'psycopg[binary]' &&
+        airflow webserver
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      airflow-meta-postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.0
+    container_name: wb-airflow-scheduler
+    restart: unless-stopped
+    user: "0:0"
+    env_file:
+      - .env
+    environment:
+      AIRFLOW_HOME: /opt/airflow/airflow_home
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/project/airflow_home/dags
+      AIRFLOW__CORE__DEFAULT_TIMEZONE: Europe/Moscow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-meta-postgres:5432/airflow
+      AIRFLOW_UID: ${AIRFLOW_UID:-50000}
+      PYTHONPATH: /home/airflow/.local/lib/python3.12/site-packages
+      TZ: Europe/Moscow
+      POSTGRES_HOST: ${LEGACY_DB_HOST:-wb-shared-db}
+      DB_HOST: ${LEGACY_DB_HOST:-wb-shared-db}
+      DB_PORT: ${LEGACY_DB_PORT:-5432}
+      DB_NAME: ${LEGACY_DB_NAME:-wb_docs}
+      DB_USER: ${LEGACY_DB_USER:-wb_user}
+      DB_PASSWORD: ${LEGACY_DB_PASSWORD:-wb_pass}
+    volumes:
+      - airflow_data:/opt/airflow/airflow_home
+      - .:/opt/airflow/project
+    networks:
+      - default
+      - shared-db
+    command: >
+      bash -lc "
+        export PATH=/home/airflow/.local/bin:/usr/local/bin:/usr/bin:/bin:$PATH &&
+        python -m pip install --no-cache-dir openai python-dotenv requests psycopg2-binary 'psycopg[binary]' &&
+        airflow scheduler
+      "
+    depends_on:
+      airflow-meta-postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-init:
+    image: apache/airflow:2.9.0
+    container_name: wb-airflow-init
+    user: "0:0"
+    env_file:
+      - .env
+    environment:
+      AIRFLOW_HOME: /opt/airflow/airflow_home
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/project/airflow_home/dags
+      AIRFLOW__CORE__DEFAULT_TIMEZONE: Europe/Moscow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-meta-postgres:5432/airflow
+      AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: Europe/Moscow
+      AIRFLOW_UID: ${AIRFLOW_UID:-50000}
+      PYTHONPATH: /home/airflow/.local/lib/python3.12/site-packages
+      TZ: Europe/Moscow
+      POSTGRES_HOST: ${LEGACY_DB_HOST:-wb-shared-db}
+      DB_HOST: ${LEGACY_DB_HOST:-wb-shared-db}
+      DB_PORT: ${LEGACY_DB_PORT:-5432}
+      DB_NAME: ${LEGACY_DB_NAME:-wb_docs}
+      DB_USER: ${LEGACY_DB_USER:-wb_user}
+      DB_PASSWORD: ${LEGACY_DB_PASSWORD:-wb_pass}
+    volumes:
+      - airflow_data:/opt/airflow/airflow_home
+      - .:/opt/airflow/project
+    networks:
+      - default
+      - shared-db
+    command: >
+      bash -c "
+        python -m pip install --no-cache-dir openai python-dotenv requests psycopg2-binary 'psycopg[binary]' &&
+        airflow db migrate &&
+        (airflow users create -r Admin -u admin -e admin@local -f Admin -l User -p admin 2>/dev/null || true)
+      "
+    depends_on:
+      airflow-meta-postgres:
+        condition: service_healthy
+
+volumes:
+  airflow_data:
+  airflow_meta_data:
+
+networks:
+  shared-db:
+    name: wb-shared-network

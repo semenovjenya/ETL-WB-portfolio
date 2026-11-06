@@ -1,0 +1,52 @@
+# Airflow (airflow_home)
+airflow_home/logs/
+airflow_home/*.db
+airflow_home/*.db-shm
+airflow_home/*.db-wal
+airflow_home/webserver_config.py
+airflow_home/simple_auth_manager_passwords.json.generated
+
+# Env and secrets
+.env
+.env.local
+*.pem
+tenants/secrets/
+runtime/
+tenants/audit.log
+
+# Generated logs, archives, and reports
+*.log
+*.zip
+*.pkl
+**/progress.json
+management_report_*.md
+tables/reports/output/*.md
+!tables/reports/output/.gitkeep
+
+# Generated JSON dumps
+**/json_data/*.json
+!**/json_data/manual_keywords*.json
+!**/json_data/auto_keywords*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Portfolio: local credentials and generated artifacts
+.env.*
+!.env.example
+.pytest_cache/
+**/json_data/
+output/
+*.csv
+*.xlsx
+*.dump
+*.sqlite*
